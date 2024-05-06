@@ -39,7 +39,8 @@
     "html2plaintext": "^2.1.2",
     "http-constants": "^2.1.0-19-gdd89f31",
     "lodash": "^4.17.21",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "require-directory": "^2.1.1"
   },
   "devDependencies": {
     "chai": "^4.3.4",
