@@ -67,6 +67,7 @@ class Route extends Base {
             .then(() => this.shippingFlow(context))
             .catch(error => {
                 const secondProvider = ENABLE.channelsPriorityEmails[1];
+                // In case of an error with the first supplier
                 if (ENABLE.enableSecondPriority && secondProvider) {
                     context.idChannel = secondProvider;
                     return P.bind(this)
