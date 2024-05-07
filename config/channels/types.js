@@ -2,5 +2,5 @@
 
 module.exports = {
     emailTwilio: 1,
-    email: 2
+    emailAWS: 2
 };
