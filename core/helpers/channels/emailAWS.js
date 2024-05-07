@@ -2,20 +2,22 @@
 
 const _ = require('lodash');
 const P = require('bluebird');
-// using Twilio SendGrid's v3 Node.js Library
-// https://github.com/sendgrid/sendgrid-nodejs
-// javascript
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 const Base = require('./base.js');
 const { validator, errors } = require('../../utils');
-const EMAIL_TWILIO_CONFIG = require('../../../config/channels/emailTwilio');
+const EMAIL_AWS_CONFIG = require('../../../config/channels/emailAWS.js');
+const AWS = require('aws-sdk');
+
+// Configurar las credenciales de AWS SES
+AWS.config.update({
+    accessKeyId: EMAIL_AWS_CONFIG.options.accessKey,
+    secretAccessKey: EMAIL_AWS_CONFIG.options.secretKey,
+    region: EMAIL_AWS_CONFIG.options.region
+});
 
 class Dispatcher extends Base {
     constructor () {
-        super(EMAIL_TWILIO_CONFIG);
-        this.transporter = sgMail;
+        super(EMAIL_AWS_CONFIG);
+        this.transporter = new AWS.SES({ apiVersion: EMAIL_AWS_CONFIG.apiVersion });
     }
 
     validate (options) {
@@ -37,9 +39,9 @@ class Dispatcher extends Base {
     dispatch (options, retry = false) {
         const data = this.data(this.getBody(options), options);
 
-        // return P.resolve(data);
+        // return P.resolve({ data: 'aws' });
         return new P((resolve, reject) => {
-            return this.transporter.send(data, (error, info) => {
+            return this.transporter.sendEmail(data, (error, info) => {
                 // Handle response Error
                 if (error) return reject(new Error(error));
 
@@ -48,21 +50,40 @@ class Dispatcher extends Base {
 
                 // Handle response Ok
                 return resolve({
-                    messageId: info
+                    messageResponse: info
                 });
             });
         });
     }
 
     data (html, options) {
-        return _.extend({}, _.omit(options, ['subject', 'text', 'html', 'to']), {
+        const data = _.extend({}, _.omit(options, ['subject', 'text', 'html', 'to']), {
             subject: _.template(options.subject)(options),
-            from: _.isArray(options.from) ? options.from.join(', ') : (options.from || EMAIL_TWILIO_CONFIG.from),
+            from: _.isArray(options.from) ? options.from.join(', ') : (options.from || EMAIL_AWS_CONFIG.from),
             to: _.isArray(options.to) ? options.to.join(', ') : options.to,
             text: options.text,
             html,
             attachments: this.getAttachments(options.files)
         });
+
+        return {
+            Destination: {
+                ToAddresses: [data.to] // Dirección de correo electrónico del destinatario
+            },
+            Message: {
+                Body: {
+                    Text: {
+                        Charset: 'UTF-8',
+                        Data: data.text
+                    }
+                },
+                Subject: {
+                    Charset: 'UTF-8',
+                    Data: data.subject
+                }
+            },
+            Source: data.from // Dirección de correo electrónico del remitente
+        };
     }
 
     getAttachments (files) {

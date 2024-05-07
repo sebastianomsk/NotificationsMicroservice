@@ -47,7 +47,7 @@ class Route extends Base {
             throw new errors.BadRequest('Bad request. Please set metadata on body parameters');
         }
         // TODO Es una validación por si se incorporan otros medios de notificación, como sms
-        if ((!_.isEmpty(req.files) || !_.isEmpty(req.body.files)) && ![CHANNELS_TYPE.emailTwilio].includes(Number(req.body.idChannel))) {
+        if ((!_.isEmpty(req.files) || !_.isEmpty(req.body.files)) && ![CHANNELS_TYPE.emailTwilio, CHANNELS_TYPE.emailAWS].includes(Number(req.body.idChannel))) {
             throw new errors.BadRequest('Bad request. Files can only be sent via email');
         }
     }

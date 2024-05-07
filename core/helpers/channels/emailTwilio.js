@@ -2,15 +2,14 @@
 
 const _ = require('lodash');
 const P = require('bluebird');
+const Base = require('./base.js');
+const { validator, errors } = require('../../utils');
+const EMAIL_TWILIO_CONFIG = require('../../../config/channels/emailTwilio');
 // using Twilio SendGrid's v3 Node.js Library
 // https://github.com/sendgrid/sendgrid-nodejs
 // javascript
 const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-const Base = require('./base.js');
-const { validator, errors } = require('../../utils');
-const EMAIL_TWILIO_CONFIG = require('../../../config/channels/emailTwilio');
+sgMail.setApiKey(EMAIL_TWILIO_CONFIG.options.SENDGRID_API_KEY);
 
 class Dispatcher extends Base {
     constructor () {
@@ -48,7 +47,7 @@ class Dispatcher extends Base {
 
                 // Handle response Ok
                 return resolve({
-                    messageId: info
+                    messageResponse: info
                 });
             });
         });
